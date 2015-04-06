@@ -272,7 +272,7 @@ if [ x"$CONFIG_BUILD_REMEDIATE" == "xy" ]; then
 fi
 
 
-if [ x"$CONFIG_BUILD_AWS" != "xy" ]; then
+if [ x"$CONFIG_BUILD_AWS" != "xy" -o x"$CONFIG_BUILD_INCLUDE_TOOR" == "xy" ]; then
 	# FIXME: Change the username and password.
 	#        If a hashed password is specified it will be used
 	#        and the PASSWORD field will be ignored.
@@ -458,18 +458,23 @@ if [ x"$CONFIG_BUILD_AWS" == "xy" ]; then
 	# disable password auth
 	sed -i "s/PasswordAuthentication yes/PasswordAuthentication no/" /etc/ssh/sshd_config
 
-	# add an sftp user
-	semanage user -N -a -R "user_r" client_u
-	useradd -m client
-	semanage login -N -a -s client_u client 
-	mkdir -m 700 /home/client/.ssh
-	chown client:client /home/client/.ssh
-	usermod -s /sbin/nologin client
-	usermod -d /client client
-	usermod --pass="$HASHED_PASSWORD" client
-	sed -i -e 's/__USERNAME__/client/g' /etc/rc.d/init.d/ec2-get-ssh
+	if [ x"$CONFIG_BUILD_INCLUDE_TOOR" != "xy" ]
+	then
+		# add an sftp user
+		semanage user -N -a -R "user_r" client_u
+		useradd -m client
+		semanage login -N -a -s client_u client 
+		mkdir -m 700 /home/client/.ssh
+		chown client:client /home/client/.ssh
+		usermod -s /sbin/nologin client
+		usermod -d /client client
+		usermod --pass="$HASHED_PASSWORD" client
+		sed -i -e 's/__USERNAME__/client/g' /etc/rc.d/init.d/ec2-get-ssh
 
-	chage -E -1 client
+		chage -E -1 client
+	else
+		sed -i -e 's/__USERNAME__/toor/g' /etc/rc.d/init.d/ec2-get-ssh
+	fi
 
 	cat << EOF > /etc/sysconfig/iptables
 *mangle
