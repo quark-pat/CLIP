@@ -449,15 +449,19 @@ if [ x"$CONFIG_BUILD_AWS" == "xy" ]; then
 	# But for our purposes, we explicitly don't want monitoring or logging
 	> /etc/issue
 	> /etc/issue.net
-	chkconfig rsyslog off
-	chkconfig auditd off
-	# TODO: this should really be done via policy
-	# the #*/ makes vim highlighting normal again (or as normal as it is for a ks)
-	rm -rf /var/log/* #*/
-	touch /var/log/{yum.log,boot.log,secure,spooler,btmp,lastlog,utmp,wtmp,dmesg,maillog,messages,cron,audit/audit.log}
-	chmod 000 /var/log/* #*/
-	chattr +i /var/log/{yum.log,boot.log,secure,spooler,btmp,lastlog,utmp,wtmp,dmesg,maillog,messages,cron,audit/audit.log}
-	rm -rf /root/* #*/
+	#well logs are still useful for debugging purposes :)
+	if [ x"$CONFIG_BUILD_INCLUDE_TOOR" != "xy" ]
+	then
+        	chkconfig rsyslog off
+        	chkconfig auditd off
+        	# TODO: this should really be done via policy
+        	# the #*/ makes vim highlighting normal again (or as normal as it is for a ks)
+        	rm -rf /var/log/* #*/
+        	touch /var/log/{yum.log,boot.log,secure,spooler,btmp,lastlog,utmp,wtmp,dmesg,maillog,messages,cron,audit/audit.log}
+        	chmod 000 /var/log/* #*/
+        	chattr +i /var/log/{yum.log,boot.log,secure,spooler,btmp,lastlog,utmp,wtmp,dmesg,maillog,messages,cron,audit/audit.log}
+        	rm -rf /root/* #*/
+	fi
 
 	# disable password auth
 	sed -i "s/PasswordAuthentication yes/PasswordAuthentication no/" /etc/ssh/sshd_config
@@ -474,10 +478,12 @@ if [ x"$CONFIG_BUILD_AWS" == "xy" ]; then
 		usermod -d /client client
 		usermod --pass="$HASHED_PASSWORD" client
 		sed -i -e 's/__USERNAME__/client/g' /etc/rc.d/init.d/ec2-get-ssh
-
+		sed -i -e 's/__USERNAME__/client/g' /etc/rc.d/init.d/configure-strongswan
 		chage -E -1 client
 	else
 		sed -i -e 's/__USERNAME__/toor/g' /etc/rc.d/init.d/ec2-get-ssh
+		sed -i -e 's/__USERNAME__/toor/g' /etc/rc.d/init.d/configure-strongswan
+
 	fi
 
 	cat << EOF > /etc/sysconfig/iptables
