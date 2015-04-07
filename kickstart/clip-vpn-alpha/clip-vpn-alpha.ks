@@ -264,7 +264,11 @@ oscap xccdf generate fix \
 
 chmod +x /root/scap/pre/remediation-script.sh
 if [ x"$CONFIG_BUILD_REMEDIATE" == "xy" ]; then
-        /root/scap/pre/remediation-script.sh
+        mkdir -p /tmp/service
+        echo "#!/bin/bash" > /tmp/service/service
+        echo "echo \"ignoring service call \$1\" >> /tmp/service/service.log" >> /tmp/service/service
+        chmod a+x /tmp/service/service
+        PATH=/tmp/service:$PATH /root/scap/pre/remediation-script.sh
         # Un-remeidate things SSG broke...
         sed -i -e "s/targeted/${POLNAME}/" /etc/selinux/config
         cat /etc/issue | sed 's/\[\\s\\n\][+*]/ /g;s/\\//g;s/[^-]- /\n\n-/g' | fold -sw 80 > /etc/issue.net
